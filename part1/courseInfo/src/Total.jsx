@@ -1,12 +1,11 @@
 import React from "react";
 
-const Total = ({ course }) => {
-  const { parts } = course;
+const Total = ({ total }) => {
   return (
     <>
       <p>
-        Number of exercises{" "}
-        {parts[0].exercises + parts[1].exercises + parts[2].exercises}
+        Total number of exercises{" "}
+        {total}
       </p>
     </>
   );
