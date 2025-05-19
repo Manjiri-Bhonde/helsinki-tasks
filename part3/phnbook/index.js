@@ -1,11 +1,14 @@
 const express = require("express");
 const morgan = require("morgan");
+require("dotenv").config();
+const Person = require("./models/people");
+
 const app = express();
 const cors = require("cors");
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
-const path = require("path");
 app.use(express.static("dist"));
+// const password = "Manjirihb";
 
 let persons = [
   {
@@ -51,7 +54,9 @@ app.get("/", (request, response) => {
 });
 
 app.get("/api/persons", morgan("tiny"), (request, response) => {
-  response.json(persons);
+  Person.find({}).then((notes) => {
+    response.json(notes);
+  });
 });
 
 app.get("/info", (request, response) => {
@@ -67,7 +72,8 @@ app.get("/api/persons/:id", (req, res) => {
   const params = req.params.id;
   const person = persons.find((person) => person.id === params);
   if (person) {
-    res.json(person);
+    // res.json(person);
+    Person.findById(req.params.id).then((person) => res.json(person));
   } else {
     res.status("404");
     res.send("Person not found ");
@@ -85,28 +91,34 @@ app.delete("/api/persons/:id", (request, response) => {
 });
 
 app.post("/api/persons", (request, response) => {
-  let newPhone = request.body;
-  const existingPerson = persons.filter(
-    (person) => person.name === newPhone.name
-  );
+  let body = request.body;
+  const existingPerson = persons.filter((person) => person.name === body.name);
 
-  newPhone.id = getMaxId();
+  // body.id = getMaxId();
+  const newPhone = new Person({
+    id: getMaxId(),
+    name: body.name,
+    number: body.number,
+  });
+
   if (
-    !newPhone.number ||
-    !newPhone.name ||
-    newPhone.name === "" ||
-    newPhone.number === 0 ||
+    !body.number ||
+    !body.name ||
+    body.name === "" ||
+    body.number === 0 ||
     existingPerson.length === 0
   ) {
     return response
       .status(400)
       .json({ error: "Number or name should be unique" });
   } else {
-    response.json(persons.concat(newPhone));
+    newPhone.save().then((savePerson) => {
+      response.json(savePerson);
+    });
   }
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log("Server started at ", { PORT });
 });
