@@ -72,7 +72,6 @@ app.delete("/api/persons/:id", (request, response) => {
 app.post("/api/persons", (request, response) => {
   let body = request.body;
   console.log(body);
-  const existingPerson = persons.filter((person) => person.name === body.name);
 
   // body.id = getMaxId();
   const newPhone = new Person({
