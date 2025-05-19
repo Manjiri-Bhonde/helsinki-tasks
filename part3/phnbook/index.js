@@ -92,6 +92,7 @@ app.delete("/api/persons/:id", (request, response) => {
 
 app.post("/api/persons", (request, response) => {
   let body = request.body;
+  console.log(body);
   const existingPerson = persons.filter((person) => person.name === body.name);
 
   // body.id = getMaxId();
@@ -100,22 +101,12 @@ app.post("/api/persons", (request, response) => {
     name: body.name,
     number: body.number,
   });
-
-  if (
-    !body.number ||
-    !body.name ||
-    body.name === "" ||
-    body.number === 0 ||
-    existingPerson.length === 0
-  ) {
-    return response
-      .status(400)
-      .json({ error: "Number or name should be unique" });
-  } else {
+  console.log(newPhone);
+  
+  
     newPhone.save().then((savePerson) => {
       response.json(savePerson);
     });
-  }
 });
 
 const PORT = process.env.PORT;
