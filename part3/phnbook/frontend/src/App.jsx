@@ -38,11 +38,11 @@ const App = () => {
               )
             );
         })
-        .catch(() => {
-          handleNotifiyChange(
-            `${newEntry.name} cant be added in phonebook`,
-            "error"
-          );
+        .catch((error) => {
+          
+          const errorMessage =
+            error.response.data.error || "Could not add entry";
+          handleNotifiyChange({ msg: errorMessage, type: "error" });
         });
     } else {
       if (
@@ -61,16 +61,16 @@ const App = () => {
             );
             setNewEntry({ name: "", number: 0 });
 
-            handleNotifiyChange(
-              `${newEntry.name} number changed to ${newEntry.number}`,
-              "notify"
-            );
+            handleNotifiyChange({
+              msg: `${newEntry.name} number changed to ${newEntry.number}`,
+              type: "notify",
+            });
           })
           .catch(() => {
-            handleNotifiyChange(
-              `${phoneChnaged.name} doesnt exist in phonebook`,
-              "error"
-            );
+            handleNotifiyChange({
+              msg: `${phoneChnaged.name} doesnt exist in phonebook`,
+              type: "error",
+            });
           });
       } else {
         setNewEntry({ name: "", number: 0 });
@@ -87,10 +87,10 @@ const App = () => {
         .catch((error) => {
           const single = persons.find((person) => person.id === id);
 
-          handleNotifiyChange(
-            `${single.name} doesnt exist in phonebook`,
-            "error"
-          );
+          handleNotifiyChange({
+            msg: `${single.name} doesnt exist in phonebook`,
+            type: "error",
+          });
         });
   };
 
@@ -133,7 +133,6 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      {console.log(notifyMessage)}
       {notifyMessage !== "" && (
         <div className={notifyMessage.type === "error" ? "error" : "notify"}>
           {notifyMessage.msg}
