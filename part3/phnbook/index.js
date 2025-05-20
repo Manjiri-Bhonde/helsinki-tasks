@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors());
 // const password = "Manjirihb";
 
-morgan.token("newObj", (request, resposne) => {
+morgan.token("newObj", (request) => {
   let newPhone = { ...request.body, id: getMaxId() };
 
   // newPhone.id = getMaxId();
@@ -57,7 +57,7 @@ app.get("/info", (request, response) => {
   });
 });
 
-app.get("/api/persons/:id", morgan("tiny"), (req, res) => {
+app.get("/api/persons/:id", morgan("tiny"), (req, res, next) => {
   Person.findById(req.params.id)
     .then((person) => res.json(person))
     .catch((error) => next(error));
@@ -65,7 +65,7 @@ app.get("/api/persons/:id", morgan("tiny"), (req, res) => {
 
 app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then((result) => {
+    .then(() => {
       response.status(204).end();
     })
     .catch((error) => next(error));
@@ -106,6 +106,4 @@ app.put("/api/persons/:id", (request, response, next) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log("Server started at ", { PORT });
-});
+app.listen(PORT, () => console.log("Server started at ", { PORT }));
