@@ -23,8 +23,20 @@ const App = () => {
         .then((response) => {
           setPersons(persons.concat(response.data));
           setNewEntry({ name: "", number: 0 });
-
-          handleNotifiyChange(`${newEntry.name} added to phonebook `, "notify");
+          phoneApi
+            .create(newPhoneAdded)
+            .then(() =>
+              handleNotifiyChange(
+                `${newEntry.name} added to phonebook `,
+                "notify"
+              )
+            )
+            .catch((error) =>
+              handleNotifiyChange(
+                `${newEntry.name} cant be added in phonebook`,
+                "error"
+              )
+            );
         })
         .catch(() => {
           handleNotifiyChange(
@@ -121,6 +133,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      {console.log(notifyMessage)}
       {notifyMessage !== "" && (
         <div className={notifyMessage.type === "error" ? "error" : "notify"}>
           {notifyMessage.msg}
