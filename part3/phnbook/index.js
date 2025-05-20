@@ -5,11 +5,10 @@ const Person = require("./models/people");
 
 const app = express();
 const cors = require("cors");
-app.use(cors());
-app.use(express.json());
 app.use(express.static("dist"));
+app.use(express.json());
+app.use(cors());
 // const password = "Manjirihb";
-
 
 morgan.token("newObj", (request, resposne) => {
   let newPhone = { ...request.body, id: getMaxId() };
@@ -28,64 +27,79 @@ const getMaxId = () => {
   return `${Math.round(Math.random() * 10)}`;
 };
 
+const errorHandler = (error, request, response, next) => {
+  console.log(error);
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+  next(error);
+};
+
 app.get("/", (request, response) => {
   response.send("<h1>Hello World!</h1>");
 });
 
-app.get("/api/persons", morgan("tiny"), (request, response) => {
+app.get("/api/persons", (request, response) => {
   Person.find({}).then((notes) => {
     response.json(notes);
   });
 });
 
 app.get("/info", (request, response) => {
-  response.send(
-    ` <div>
-        <p>PhoneBook has info for ${persons.length + 1} people</p>
-        <p>${new Date()}</p>
-    </div>`
-  );
+  Person.countDocuments({}).then((count) => {
+    response.send(
+      ` <div>
+          <p>PhoneBook has info for ${count } people</p>
+          <p>${new Date()}</p>
+      </div>`
+    );
+  });
 });
 
-app.get("/api/persons/:id", (req, res) => {
-  const params = req.params.id;
-  const person = persons.find((person) => person.id === params);
-  if (person) {
-    // res.json(person);
-    Person.findById(req.params.id).then((person) => res.json(person));
-  } else {
-    res.status("404");
-    res.send("Person not found ");
-    res.end();
-  }
+app.get("/api/persons/:id", morgan("tiny"), (req, res) => {
+  Person.findById(req.params.id)
+    .then((person) => res.json(person))
+    .catch((error) => next(error));
 });
 
-app.delete("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  const person = persons.find((person) => person.id === id);
-  if (person) {
-    persons = persons.filter((person) => person.id !== id);
-    response.status(204).end();
-  }
+app.delete("/api/persons/:id", (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 app.post("/api/persons", (request, response) => {
   let body = request.body;
-  console.log(body);
 
-  // body.id = getMaxId();
   const newPhone = new Person({
-    id: getMaxId(),
     name: body.name,
     number: body.number,
   });
-  console.log(newPhone);
-  
-  
-    newPhone.save().then((savePerson) => {
-      response.json(savePerson);
-    });
+
+  newPhone.save().then((savePerson) => {
+    response.json(savePerson);
+  });
 });
+
+app.put("/api/persons/:id", (request, response, next) => {
+  const { name, number } = request.body;
+
+  Person.findById(request.params.id)
+    .then((person) => {
+      if (!person) console.log("not found");
+
+      person.name = name;
+      person.number = number;
+      return person.save().then((updatedPerson) => {
+        response.json(updatedPerson);
+      });
+    })
+    .catch((error) => next(error));
+});
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
