@@ -23,7 +23,7 @@ blogsRouter.get("/:id", (request, response, next) => {
 
 blogsRouter.post("/", (request, response, next) => {
   const body = request.body;
-  logger.info(request);
+
   const blog = new Blog({
     title: body.title,
     author: body.author,
