@@ -28,7 +28,7 @@ blogsRouter.post("/", (request, response, next) => {
     title: body.title,
     author: body.author,
     url: body.url,
-    likes: body.likes,
+    likes: body.likes ?? 0,
   });
 
   blog
@@ -39,33 +39,31 @@ blogsRouter.post("/", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-blogsRouter.delete("/:id", (request, response, next) => {
-  Blog.findByIdAndDelete(request.params.id)
-    .then(() => {
-      response.status(204).end();
-    })
-    .catch((error) => next(error));
+blogsRouter.delete("/:id", async (request, response, next) => {
+  const { id } = request.params;
+
+  await Blog.findByIdAndDelete(id);
+  response.status(204).end();
 });
 
-blogsRouter.put("/:id", (request, response, next) => {
+blogsRouter.put("/:id", async (request, response, next) => {
   const { title, author, url, likes } = request.body;
+  try {
+    const blog = await Blog.findById(request.params.id);
+    if (!blog) {
+      return response.status(404).end();
+    }
+    blog.title = title;
+    blog.author = author;
+    blog.url = url;
+    blog.likes = likes;
 
-  Blog.findById(request.params.id)
-    .then((blog) => {
-      if (!blog) {
-        return response.status(404).end();
-      }
+    const updatedBlog = await blog.save();
 
-      blog.title = title;
-      blog.author = author;
-      blog.url = url;
-      blog.likes = likes;
-
-      return blog.save().then((updatedBlog) => {
-        response.json(updatedBlog);
-      });
-    })
-    .catch((error) => next(error));
+    response.json(updatedBlog);
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = blogsRouter;
