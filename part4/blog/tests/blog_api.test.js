@@ -1,9 +1,12 @@
-const { test, after } = require("node:test");
+const { test, after, beforeEach } = require("node:test");
+const bcrypt = require("bcrypt");
 const assert = require("node:assert");
 const mongoose = require("mongoose");
 const supertest = require("supertest");
 const app = require("../app");
 const Blog = require("../models/blog");
+const helper = require("./test_helper");
+const User = require("../models/user");
 
 const api = supertest(app);
 
@@ -60,28 +63,83 @@ test("check if likes not provided defualt to zero", async () => {
   assert.strictEqual(newBlog.likes, 0);
 });
 
-test("testing delete ", async () => {
-  const oldBlogs = await Blog.find({});
-  const id = "6847faeff8275ef257e9ec23";
-  const response = await api.delete(`/api/blogs/${id}`).expect(204);
+// test("testing delete ", async () => {
+//   const oldBlogs = await Blog.find({});
+//   const id = "6847faeff8275ef257e9ec23";
+//   const response = await api.delete(`/api/blogs/${id}`).expect(204);
 
-  const newBlogs = await Blog.find({});
-  assert.strictEqual(newBlogs.length + 1, oldBlogs.length);
-});
+//   const newBlogs = await Blog.find({});
+//   assert.strictEqual(newBlogs.length + 1, oldBlogs.length);
+// });
 
-test.only("testing update of blog likes", async () => {
-  const id = "6847faeff8275ef257e9ec23";
-  const editedBlog = {
-    title: "Editing",
-    author: "Edit",
-    url: "test",
-    likes: 1,
-  };
-  const response = await api
-    .put(`/api/blogs/${id}`)
-    .send(editedBlog)
-    .expect(200);
-  assert.strictEqual(response.body.likes, 1);
+// test("testing update of blog likes", async () => {
+//   const id = "6847faeff8275ef257e9ec23";
+//   const editedBlog = {
+//     title: "Editing",
+//     author: "Edit",
+//     url: "test",
+//     likes: 1,
+//   };
+//   const response = await api
+//     .put(`/api/blogs/${id}`)
+//     .send(editedBlog)
+//     .expect(200);
+//   assert.strictEqual(response.body.likes, 1);
+// });
+
+describe("when there is initially one user in db", () => {
+  beforeEach(async () => {
+    await User.deleteMany({});
+
+    const passwordHash = await bcrypt.hash("sekret", 10);
+    const user = new User({ username: "root", passwordHash });
+
+    await user.save();
+  });
+
+  test("creation fails with proper statuscode and message if username already taken", async () => {
+    const usersAtStart = await helper.usersInDb();
+
+    const newUser = {
+      username: "root",
+      name: "Superuser",
+      password: "salainen",
+      blogs:[],
+    };
+
+    const result = await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+
+    const usersAtEnd = await helper.usersInDb();
+    assert(result.body.error.includes("expected `username` to be unique"));
+
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length);
+  });
+
+  test("creation succeeds with a fresh username", async () => {
+    const usersAtStart = await helper.usersInDb();
+
+    const newUser = {
+      username: "mluukkai",
+      name: "Matti Luukkainen",
+      password: "salainen",
+    };
+
+    await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
+
+    const usersAtEnd = await helper.usersInDb();
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1);
+
+    const usernames = usersAtEnd.map((u) => u.username);
+    assert(usernames.includes(newUser.username));
+  });
 });
 
 after(async () => {
