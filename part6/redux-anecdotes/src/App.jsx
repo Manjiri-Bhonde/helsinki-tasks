@@ -5,13 +5,13 @@ import Filter from "./components/Filter";
 import Notification from "./components/Notification";
 import { useEffect } from "react";
 import { getAll } from "./services/anecdotes";
-import { setAnecdotes } from "./reducers/anecdoteReducer";
+import { initializeApp } from "./reducers/anecdoteReducer";
 
 const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    getAll().then((response) => dispatch(setAnecdotes(response)));
+    dispatch(initializeApp());
   }, [dispatch]);
 
   return (
