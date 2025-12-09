@@ -11,6 +11,9 @@ export const getAll = async () => {
 }
 
 export const createNewAnecdote = async (content) => {
+  if (content.length < 5) {
+    throw new Error('too short anecdote')
+  }
   const options = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -26,16 +29,15 @@ export const createNewAnecdote = async (content) => {
 
 export const voteForAnaecdote = async (anecdote) => {
   const options = {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...anecdote, votes: anecdote.votes + 1 }),
-  };
-
-  const response = await fetch(`${baseURl}/${anecdote.id}`, options);
-  if (!response.ok) {
-    throw new Error("Error updating anecdote");
   }
 
-  return response.json();
-};
+  const response = await fetch(`${baseURl}/${anecdote.id}`, options)
+  if (!response.ok) {
+    throw new Error('Error updating anecdote')
+  }
 
+  return response.json()
+}
